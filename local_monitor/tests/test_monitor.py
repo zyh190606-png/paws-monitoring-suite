@@ -152,7 +152,7 @@ class SnapshotTests(unittest.TestCase):
         (run / "PID.txt").write_text("35\n", encoding="ascii")
         restarted = case_profile(work, process_backend="wsl2", pid_override=135)
         self.assertEqual(restarted["pid"], 35)
-        self.assertEqual(restarted["pid_path"], run / "PID.txt")
+        self.assertEqual(restarted["pid_path"].resolve(), (run / "PID.txt").resolve())
         (run / "PID.txt").unlink()
         self.assertEqual(profile["stdout_path"], run / "paws_stdout.log")
         snapshot = SpinupMonitor(work).snapshot(datetime(2026, 8, 23, 1, tzinfo=timezone.utc))
