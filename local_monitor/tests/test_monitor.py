@@ -154,7 +154,7 @@ class SnapshotTests(unittest.TestCase):
         self.assertEqual(restarted["pid"], 35)
         self.assertEqual(restarted["pid_path"].resolve(), (run / "PID.txt").resolve())
         (run / "PID.txt").unlink()
-        self.assertEqual(profile["stdout_path"], run / "paws_stdout.log")
+        self.assertEqual(profile["stdout_path"].resolve(), (run / "paws_stdout.log").resolve())
         snapshot = SpinupMonitor(work).snapshot(datetime(2026, 8, 23, 1, tzinfo=timezone.utc))
         self.assertEqual(snapshot["progress"]["current_date"], "2004-01-04")
         self.assertIsNotNone(snapshot["progress"]["progress_pct"])
