@@ -1,0 +1,122 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#0b1117">
+  <link rel="icon" type="image/svg+xml" href="/static/favicon.svg">
+  <title>PAWS · 本地运行监控</title>
+  <link rel="stylesheet" href="/static/styles.css">
+</head>
+<body>
+  <div class="grain" aria-hidden="true"></div>
+  <header class="masthead">
+    <div class="brand-lockup">
+      <span class="eyebrow">PAWS / LOCAL RUN OBSERVATORY</span>
+      <h1>本地 PAWS<br><em>运行</em> 监控</h1>
+    </div>
+    <div class="header-meta">
+      <div class="live-pill"><span class="pulse"></span><span id="state-label">连接中</span></div>
+      <div class="sample-label">最后采样 <strong id="sampled-at">—</strong></div>
+      <button class="refresh-button" id="refresh-button" type="button" aria-label="立即刷新">↻ <span>立即刷新</span></button>
+    </div>
+  </header>
+
+  <main class="shell">
+    <section class="target-dock" aria-label="当前监控目标">
+      <div class="target-copy">
+        <span class="target-kicker">MONITOR TARGET</span>
+        <strong id="target-name">尚未选择 PAWS 程序</strong>
+        <span id="target-path">点击右侧按钮，从当前运行进程中选择</span>
+      </div>
+      <button class="target-button" id="choose-target" type="button"><span class="target-crosshair">⌖</span><span>选择运行中的 PAWS</span></button>
+    </section>
+
+    <section class="hero-grid">
+      <article class="progress-panel panel">
+        <div class="panel-kicker">SIMULATION CLOCK <span id="clock-source">· waiting</span></div>
+        <div class="clock-row">
+          <div>
+            <div class="sim-date" id="sim-date">等待输出</div>
+            <div class="sim-range"><span id="model-start">—</span><span class="range-arrow">→</span><span id="model-end">—</span></div>
+          </div>
+          <div class="percent-wrap"><span id="progress-percent">—</span><small>% complete</small></div>
+        </div>
+        <div class="progress-track" id="progress-track" role="progressbar" aria-label="模拟进度" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0"><div id="progress-fill"></div><span id="progress-marker"></span></div>
+        <div class="progress-foot"><span id="elapsed-sim">— 模拟日已完成</span><span id="remaining-sim">— 模拟日剩余</span></div>
+      </article>
+
+      <article class="signal-panel panel">
+        <div class="panel-kicker">RUN SIGNAL <span class="signal-dot" id="signal-dot"></span></div>
+        <div class="signal-status" id="signal-status">读取中</div>
+        <div class="signal-detail" id="signal-detail">正在读取指定 PAWS PID</div>
+        <div class="signal-grid">
+          <div><span>PID</span><strong id="pid">—</strong></div>
+          <div><span>内存</span><strong id="memory">—</strong></div>
+          <div><span>stderr</span><strong id="stderr-size">—</strong></div>
+          <div><span>进度文件</span><strong id="progress-age">—</strong></div>
+        </div>
+      </article>
+    </section>
+
+    <section class="metrics-grid">
+      <article class="metric-card accent-cyan">
+        <span class="metric-label">平均速度</span>
+        <strong id="avg-speed">—</strong><span class="metric-unit">模拟日 / 墙钟小时</span>
+        <div class="metric-note" id="wall-elapsed">墙钟运行 —</div>
+      </article>
+      <article class="metric-card accent-amber">
+        <span class="metric-label">最近速度</span>
+        <strong id="recent-speed">—</strong><span class="metric-unit">模拟日 / 墙钟小时</span>
+        <div class="metric-note">按最近 2 小时有效采样</div>
+      </article>
+      <article class="metric-card accent-lime">
+        <span class="metric-label">预计剩余</span>
+        <strong id="eta">—</strong><span class="metric-unit">墙钟时间</span>
+        <div class="metric-note" id="finish-at">预计完成 —</div>
+      </article>
+    </section>
+
+    <section class="lower-grid">
+      <article class="chart-panel panel">
+        <div class="panel-heading"><div><div class="panel-kicker">TRAJECTORY</div><h2>进度轨迹</h2></div><span class="chart-caption">每次刷新保留本窗口采样</span></div>
+        <div class="chart-wrap"><svg id="history-chart" viewBox="0 0 720 220" role="img" aria-label="进度轨迹图"><g class="grid-lines"><line x1="48" y1="20" x2="700" y2="20"/><line x1="48" y1="110" x2="700" y2="110"/><line x1="48" y1="200" x2="700" y2="200"/></g><path id="history-area" d=""/><path id="history-line" d=""/><g id="history-points"></g><text x="10" y="25">100%</text><text x="22" y="115">50%</text><text x="31" y="205">0%</text></svg></div>
+        <div class="chart-footer"><span id="chart-first">—</span><span id="chart-last">—</span></div>
+      </article>
+
+      <article class="health-panel panel">
+        <div class="panel-heading"><div><div class="panel-kicker">HEALTH CHECK</div><h2>运行健康</h2></div><span class="read-only">READ ONLY</span></div>
+        <div id="warnings" class="warnings"><div class="empty-state">暂无告警</div></div>
+        <div class="health-note">监控器只读取输出文件和指定 PID，不会暂停、终止或修改 PAWS。</div>
+      </article>
+    </section>
+
+    <section class="detail-grid">
+      <article class="files-panel panel">
+        <div class="panel-heading"><div><div class="panel-kicker">OUTPUT SURFACE</div><h2>输出文件</h2></div><span id="file-summary">—</span></div>
+        <div class="table-scroll"><table><thead><tr><th>文件</th><th>大小</th><th>最后更新</th><th>年龄</th></tr></thead><tbody id="files-body"></tbody></table></div>
+      </article>
+      <article class="logs-panel panel">
+        <div class="panel-heading"><div><div class="panel-kicker">TAIL / EVIDENCE</div><h2>最近日志</h2></div></div>
+        <div class="log-block"><div class="log-title">stdout</div><pre id="stdout-log">等待输出…</pre></div>
+        <div class="log-block error-log"><div class="log-title">stderr</div><pre id="stderr-log">空</pre></div>
+      </article>
+    </section>
+  </main>
+
+  <footer class="footer"><span id="case-label">—</span><span>手动选择 · 本地只读 · <span id="refresh-label">每 5 秒刷新</span></span></footer>
+
+  <div class="modal-backdrop" id="target-modal" hidden>
+    <section class="target-modal" role="dialog" aria-modal="true" aria-labelledby="target-modal-title">
+      <div class="modal-head">
+        <div><span class="eyebrow">RUNNING PROCESS PICKER</span><h2 id="target-modal-title">选择要监控的 PAWS</h2></div>
+        <button class="modal-close" id="close-target-modal" type="button" aria-label="关闭">×</button>
+      </div>
+      <p class="modal-help">这里只在你点击按钮时读取一次 Windows 与 WSL2 当前进程。选择不会暂停、切换或修改 PAWS，只会改变面板读取的输出目录。</p>
+      <div class="case-list" id="case-list"><div class="case-loading">正在读取运行中的 PAWS…</div></div>
+      <div class="modal-foot"><span id="case-count">—</span><button class="scan-again" id="scan-again" type="button">重新读取列表</button></div>
+    </section>
+  </div>
+  <script src="/static/app.js" defer></script>
+</body>
+</html>

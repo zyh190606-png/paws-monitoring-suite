@@ -1,0 +1,108 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>PAWS · 河流计算观测站</title>
+  <link rel="icon" href="data:,">
+  <link rel="stylesheet" href="/styles.css">
+</head>
+<body>
+  <div class="river-grid" aria-hidden="true"></div>
+  <main class="shell">
+    <header class="masthead">
+      <div class="brand-block">
+        <div class="brand-mark"><span></span><span></span><span></span></div>
+        <div>
+          <p class="eyebrow">YANHE COMPUTE OBSERVATORY</p>
+          <h1>PAWS 河流计算观测站</h1>
+          <p class="subtitle">多账号 Slurm 阵列 · 模型日历 · 完成健康门 · 校验下载</p>
+        </div>
+      </div>
+      <div class="refresh-cluster">
+        <div class="freshness"><span id="freshDot"></span><b id="freshLabel">尚未采样</b><small id="freshTime">—</small></div>
+        <button id="refreshCasesBtn" class="case-refresh-btn" disabled><span class="refresh-icon">↻</span>刷新当前 Case</button>
+        <button id="refreshBtn" class="primary-btn"><span class="refresh-icon">↻</span>刷新全部账号</button>
+      </div>
+    </header>
+
+    <section class="control-strip" aria-label="查询控制">
+      <label><span>历史窗口</span><select id="daysInput"><option value="1">最近1天</option><option value="7" selected>最近7天</option><option value="14">最近14天</option><option value="30">最近30天</option></select></label>
+      <label class="job-query"><span>手动 Job ID</span><input id="manualJobs" placeholder="例如 117386370，多个用逗号分隔"></label>
+      <div class="policy"><i></i><span>完成前严格只读</span><b>通过六项健康门后开放下载</b></div>
+    </section>
+
+    <section id="summaryGrid" class="summary-grid" aria-live="polite"></section>
+
+    <section class="account-band">
+      <div class="section-heading"><div><p class="eyebrow">ACCOUNT TELEMETRY</p><h2>账号遥测</h2></div><div class="section-actions"><button id="manageAccountsBtn" class="text-btn">＋ 管理账号</button><button id="clearAccount" class="text-btn">显示全部</button></div></div>
+      <div id="accountRail" class="account-rail"></div>
+    </section>
+
+    <section id="alertPanel" class="alert-panel hidden">
+      <div class="section-heading"><div><p class="eyebrow">ACTIVE SIGNALS</p><h2>异常与余量警告</h2></div><div class="section-actions"><span id="alertCount" class="alert-count"></span><button id="markAlertsReadBtn" class="text-btn">全部标记已读</button></div></div>
+      <div id="alertList" class="alert-list"></div>
+    </section>
+
+    <section class="jobs-section">
+      <div class="section-heading jobs-heading">
+        <div><p class="eyebrow">SLURM ARRAYS</p><h2>任务批次</h2></div>
+        <div class="search-wrap"><span>⌕</span><input id="searchInput" placeholder="搜索 case / job / batch"></div>
+      </div>
+      <div id="jobCards" class="job-cards"></div>
+    </section>
+
+    <section class="case-section">
+      <div class="case-toolbar">
+        <div><p class="eyebrow">MODEL CALENDAR</p><h2>Case 运行日历</h2></div>
+        <div class="case-actions">
+          <span id="selectionLabel">未选择可下载 case</span>
+          <button id="downloadBtn" class="download-btn" disabled>选择文件并打包下载</button>
+        </div>
+      </div>
+      <div class="table-shell">
+        <table>
+          <thead><tr><th class="check-col"></th><th>账号 / Job</th><th>Case</th><th>状态</th><th>模型日期</th><th>计算进度</th><th>预计结束 / 余量</th><th>健康</th></tr></thead>
+          <tbody id="caseRows"><tr><td colspan="8" class="empty-state">点击“刷新全部账号”读取HPC状态</td></tr></tbody>
+        </table>
+      </div>
+    </section>
+
+    <section id="downloadSection" class="download-section hidden">
+      <div class="section-heading"><div><p class="eyebrow">VERIFIED TRANSFER</p><h2>下载任务</h2></div></div>
+      <div id="downloadTasks" class="download-tasks"></div>
+    </section>
+  </main>
+
+  <div id="loadingVeil" class="loading-veil hidden"><div class="sonar"><i></i><i></i><i></i><b id="loadingTitle">正在并行查询全部账号</b><span id="loadingDetail">SSH · SQUEUE · SACCT · PAWS STDOUT</span></div></div>
+  <div id="toastStack" class="toast-stack" aria-live="assertive"></div>
+
+  <dialog id="downloadDialog">
+    <form method="dialog" class="download-modal">
+      <header><div><p class="eyebrow">COMPLETION GATE PASSED</p><h2>选择打包内容</h2></div><button value="cancel" class="close-btn" aria-label="关闭">×</button></header>
+      <div id="selectedCaseSummary" class="selected-case-summary"></div>
+      <div class="scope-tabs" role="tablist">
+        <button type="button" data-scope="standard" class="active">标准精选结果</button>
+        <button type="button" data-scope="full">完整运行目录</button>
+        <button type="button" data-scope="custom">自选具体文件</button>
+      </div>
+      <p id="scopeHelp" class="scope-help">分析输出、运行日志与provenance；默认排除静态运行资源。</p>
+      <div id="filePicker" class="file-picker"></div>
+      <label class="package-name"><span>本地文件夹名称</span><input id="packageLabel" maxlength="100"></label>
+      <footer><span>下载到 <code id="downloadRoot"></code></span><button type="button" id="confirmDownload" class="primary-btn">确认打包并下载</button></footer>
+    </form>
+  </dialog>
+
+  <dialog id="accountDialog">
+    <form method="dialog" class="account-modal">
+      <header><div><p class="eyebrow">ACCOUNT REGISTRY</p><h2>管理 HPC 账号</h2></div><button value="cancel" class="close-btn" aria-label="关闭">×</button></header>
+      <div class="account-manager-body">
+        <section><h3>添加账号</h3><p class="modal-note">私钥只发送到本机面板并保存到本地账号目录，不会进入浏览器快照。</p><div class="account-form"><label>账号名<input id="accountUsername" placeholder="例如 researcher01" autocomplete="off"></label><label>私钥文件<input id="accountKeyFile" type="file" accept=".txt,.pem,.key,*/*"><small id="accountKeyFileName">未选择文件</small></label><button type="button" id="addAccountBtn" class="primary-btn">添加并纳入监控</button></div></section>
+        <section><div class="manager-heading"><h3>当前账号</h3><small>移除后下次刷新生效</small></div><div id="accountList" class="managed-account-list"></div></section>
+      </div>
+    </form>
+  </dialog>
+
+  <script src="/app.js"></script>
+</body>
+</html>

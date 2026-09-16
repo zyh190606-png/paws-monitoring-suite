@@ -1,0 +1,14 @@
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.mypy_cache/
+*.log
+config.local.json
+state_root/
+read_alerts.json
+account_registry.json
+*.tmp
+*.pem
+*.key
+id_rsa*
+outputs/

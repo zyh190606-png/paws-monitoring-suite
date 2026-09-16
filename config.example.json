@@ -1,0 +1,28 @@
+{
+  "host": "hpc.example.edu",
+  "port": 22,
+  "accounts": [
+    {
+      "username": "researcher01",
+      "key_path": "~/.ssh/paws_hpc_researcher01_key"
+    }
+  ],
+  "accounts_root": "runtime/accounts",
+  "legacy_keys_root": "~/.ssh",
+  "remote_cases_root": "paws_hpc_cases",
+  "local_packages_root": "runtime/packages",
+  "download_root": "runtime/downloads",
+  "state_root": "runtime/state",
+  "account_ledger_path": "runtime/account_ledger.csv",
+  "account_case_limit": 40,
+  "account_pool_accounts": [],
+  "recent_days": 7,
+  "ssh_timeout_seconds": 12,
+  "remote_query_timeout_seconds": 60,
+  "query_retry_count": 1,
+  "stale_stdout_minutes": 30,
+  "max_parallel_accounts": 4,
+  "listen_host": "127.0.0.1",
+  "listen_port": 8876
+}
+
